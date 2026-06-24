@@ -65,3 +65,8 @@ mod kaumudi_67;
 mod dhaturatnakara;
 
 mod macdonell;
+
+mod rv_let_aorist_corpus;
+mod rv_let_corpus;
+mod rv_let_helpers;
+mod rv_let_perfect_corpus;
