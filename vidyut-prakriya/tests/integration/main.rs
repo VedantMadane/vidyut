@@ -30,7 +30,7 @@ mod kashika_7_1;
 mod kashika_7_2;
 mod kashika_7_3;
 mod kashika_7_4;
-// mod kashika_8_1;
+mod kashika_8_1;
 mod kashika_8_2;
 mod kashika_8_3;
 mod kashika_8_4;
@@ -63,3 +63,10 @@ mod kaumudi_65;
 mod kaumudi_67;
 
 mod dhaturatnakara;
+
+mod macdonell;
+
+mod rv_let_aorist_corpus;
+mod rv_let_corpus;
+mod rv_let_helpers;
+mod rv_let_perfect_corpus;

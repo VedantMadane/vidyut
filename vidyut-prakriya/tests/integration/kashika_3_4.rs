@@ -257,14 +257,22 @@ fn sutra_3_4_93() {
 
 #[test]
 fn sutra_3_4_94() {
-    // No `\\` to force parasmaipada
-    // -ti forms are not attested but optional by 3.4.97.
+    // No `\\` to force parasmaipada.
+    // 3.4.97 mandatorily drops the final -i for these dhātus, so both pit
+    // and Nit branches converge to the same form.
     assert_has_tip(&[], &d("juzI~", Tudadi), Let, &["jozizat"]);
     assert_has_tip(&[], &d("tF", Bhvadi), Let, &["tArizat"]);
     assert_has_tip(&[], &d("madi~", Bhvadi), Let, &["mandizat"]);
 
-    assert_has_tip(&[], &d("patx~", Bhvadi), Let, &["patAti"]);
-    assert_has_tip(&[], &nic(&d("cyu\\N", Bhvadi)), Let, &["cyAvayAti"]);
+    // For non-3.4.97 dhātus, 3.4.97 (optional, itaśca lopaḥ parasmaipadeṣu)
+    // produces both the long form and the short form (after final -i drop).
+    assert_has_tip(&[], &d("patx~", Bhvadi), Let, &["patAti", "patAt"]);
+    assert_has_tip(
+        &[],
+        &nic(&d("cyu\\N", Bhvadi)),
+        Let,
+        &["cyAvayAti", "cyAvayAt"],
+    );
 }
 
 #[test]
@@ -293,18 +301,27 @@ fn sutra_3_4_96() {
 
 #[test]
 fn sutra_3_4_97() {
-    // No `\\` to force parasmaipada
+    // No `\\` to force parasmaipada.
+    // Same expectation as sutra_3_4_94 — see comments there.
     assert_has_tip(&[], &d("juzI~", Tudadi), Let, &["jozizat"]);
     assert_has_tip(&[], &d("tF", Bhvadi), Let, &["tArizat"]);
     assert_has_tip(&[], &d("madi~", Bhvadi), Let, &["mandizat"]);
 
-    assert_has_tip(&[], &d("patx~", Bhvadi), Let, &["patAti"]);
-    assert_has_tip(&[], &nic(&d("cyu\\N", Bhvadi)), Let, &["cyAvayAti"]);
+    assert_has_tip(&[], &d("patx~", Bhvadi), Let, &["patAti", "patAt"]);
+    assert_has_tip(
+        &[],
+        &nic(&d("cyu\\N", Bhvadi)),
+        Let,
+        &["cyAvayAti", "cyAvayAt"],
+    );
 }
 
 #[test]
 fn sutra_3_4_98() {
     let kf = d("qukf\\Y", Tanadi);
+    // The vārttika *leṭsambandhin uttamapuruṣasya sakārasya vā lopo bhavati*
+    // makes the final -s of 1du -vas / 1pl -mas optionally elided under leṬ
+    // (implemented as 3.4.98).
     assert_has_vas(&[], &kf, Let, &["karavAva", "karavAvaH"]);
     assert_has_mas(&[], &kf, Let, &["karavAma", "karavAmaH"]);
 }

@@ -59,6 +59,10 @@ pub enum Rule {
     ///
     /// Format: `<sutra>`
     Kaumudi(&'static str),
+    /// An escape link to other references,
+    ///
+    ///  Format: '<description _no_commas>, <link>'
+    Anyatra(&'static str),
 }
 
 impl Rule {
@@ -81,6 +85,7 @@ impl Rule {
             Self::Phit(x) => x,
             Self::Kashika(x) => x,
             Self::Kaumudi(x) => x,
+            Self::Anyatra(x) => x,
         }
     }
 
@@ -103,6 +108,7 @@ impl Rule {
             Self::Phit(_) => "PiwsUtrARi",
             Self::Unadipatha(_) => "uRAdipAWaH",
             Self::Varttika(_) => "vArttikAH",
+            Self::Anyatra(_) => "anyatra",
         }
     }
 }
@@ -411,7 +417,8 @@ impl Prakriya {
     /// 4.1.2 (NyAp-prAtipadikAt). So, this method returns both pratipadikas and nyApu-antas.
     pub(crate) fn nyapu_pratipadika(&self, i_end: usize) -> Option<TermView> {
         let t = self.get(i_end)?;
-        if t.is_pratipadika_or_nyapu() {
+        // Also include dhatus with Bha tag (e.g. `han` in kvip-krdanta declension).
+        if t.is_pratipadika_or_nyapu() || (t.is_dhatu() && t.has_tag(Tag::Bha)) {
             TermView::new(self.terms(), 0, i_end)
         } else {
             None

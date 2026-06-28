@@ -7,7 +7,7 @@ Various rules that create subantas. These rules come primarily from adhyayas 6 n
 If a subanta rule is deeply intertwined with other kinds of rules, we keep it out of this module in
 favor of more generic modules like `angasya.rs`.
 */
-use crate::angasya::asiddhavat;
+use crate::angasya::{asiddhavat, try_change_cu_to_ku};
 use crate::args::Agama as A;
 use crate::args::BaseKrt as K;
 use crate::args::BaseKrt::kvip;
@@ -36,7 +36,7 @@ fn add_num(t: &mut Term) {
 /// 6.4.2 - 6.4.19
 fn try_dirgha_adesha_after_num_agama(p: &mut Prakriya) -> Option<()> {
     let i_sup = p.find_last_with_tag(T::Sup)?;
-    let i_anga = p.find_prev_where(i_sup, |t| !t.is_agama())?;
+    let i_anga = p.find_prev_where(i_sup, |t| !t.is_agama() && !t.is_empty())?;
 
     let anga = p.get(i_anga)?;
     let sup = p.get(i_sup)?;
@@ -65,15 +65,46 @@ fn try_dirgha_adesha_after_num_agama(p: &mut Prakriya) -> Option<()> {
         let anga = p.get(i_anga)?;
         let sup = p.get(i_sup)?;
         let sau = sup.is(Sup::su);
+        let mut is_puzan_aryaman_han = anga.has_text_in(&["pUzan", "aryaman", "han"]);
+        if anga.is_unadi() || anga.is_krt() {
+            // collect the text from dhatu onwards
+            if let Some(i_dhatu) = p.find_prev_where(i_anga, |t| t.is_dhatu()) {
+                let text: String = p.terms()[i_dhatu..=i_anga]
+                    .iter()
+                    .map(|t| t.text.clone())
+                    .collect();
+                let mut with_upapada_text = String::new();
+                if i_dhatu > 1 {
+                    with_upapada_text = p.terms()[i_dhatu - 2..=i_anga]
+                        .iter()
+                        .map(|t| t.text.clone())
+                        .collect();
+                }
+                if ["pUzan", "aryaman"].contains(&text.as_str())
+                    || ["pUzan", "aryaman"].contains(&with_upapada_text.as_str())
+                {
+                    is_puzan_aryaman_han = true;
+                }
+            }
+        }
+
         if anga.has_antya('n') {
-            if anga.ends_with("in") || anga.has_text_in(&["pUzan", "aryaman"]) {
+            if anga.ends_with("in") || is_puzan_aryaman_han {
                 let sub = al::to_dirgha(anga.upadha()?)?;
                 if (sup.is(Sup::jas) || sup.is(Sup::Sas)) && sup.has_text("i") {
                     // yogIni
                     p.run_at("6.4.12", i_anga, |t| t.set_upadha_char(sub));
                 } else if sau {
-                    // yogI
-                    p.run_at("6.4.13", i_anga, |t| t.set_upadha_char(sub));
+                    // 6.4.8: upadha-dirgha for prathama ekavachana (su).
+                    // Applied here because the subanta code can't see past the empty kvip to
+                    // reach `han`. Only for `su` because n-lopa (8.2.7) applies there.
+                    // (e.g. vftrahan + su -> vftrahA)
+                    if is_puzan_aryaman_han {
+                        p.run_at("6.4.8", i_anga, |t| t.set_upadha_char(sub));
+                    } else {
+                        // yogI
+                        p.run_at("6.4.13", i_anga, |t| t.set_upadha_char(sub));
+                    }
                 }
             } else if !sup.is_lupta() {
                 // PalAni
@@ -871,7 +902,10 @@ pub fn run(p: &mut Prakriya) {
     // - change of of "-an" to "-n" (6.4.134)
     samjna::try_run_for_pada_or_bha(p);
     asiddhavat::bhasya(p);
-
+    // Complete bhasya processing before applying "cu to ku" rules !!
+    for i in 0..p.len() {
+        try_change_cu_to_ku(p, i);
+    }
     run_after_bhasya(p);
     try_anga_adesha_after_vibhakti_changes(p);
 }

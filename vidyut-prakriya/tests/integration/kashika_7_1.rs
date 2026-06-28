@@ -296,14 +296,14 @@ fn sutra_7_1_25() {
 
 #[test]
 fn sutra_7_1_27() {
-    assert_has_sup_6s("asmad", Pum, &["mama"]);
-    assert_has_sup_6s("yuzmad", Pum, &["tava"]);
+    assert_has_sup_6s("asmad", Pum, &["mama", "me"]);
+    assert_has_sup_6s("yuzmad", Pum, &["tava", "te"]);
 }
 
 #[test]
 fn sutra_7_1_28() {
-    assert_has_sup_4s("asmad", Pum, &["mahyam"]);
-    assert_has_sup_4s("yuzmad", Pum, &["tuByam"]);
+    assert_has_sup_4s("asmad", Pum, &["mahyam", "me"]);
+    assert_has_sup_4s("yuzmad", Pum, &["tuByam", "te"]);
 
     assert_has_sup_1s("yuzmad", Pum, &["tvam"]);
     assert_has_sup_1s("asmad", Pum, &["aham"]);
@@ -311,22 +311,22 @@ fn sutra_7_1_28() {
     assert_has_sup_1d("asmad", Pum, &["AvAm"]);
     assert_has_sup_1p("yuzmad", Pum, &["yUyam"]);
     assert_has_sup_1p("asmad", Pum, &["vayam"]);
-    assert_has_sup_2s("yuzmad", Pum, &["tvAm"]);
-    assert_has_sup_2s("asmad", Pum, &["mAm"]);
-    assert_has_sup_2d("yuzmad", Pum, &["yuvAm"]);
-    assert_has_sup_2d("asmad", Pum, &["AvAm"]);
+    assert_has_sup_2s("yuzmad", Pum, &["tvAm", "tvA"]);
+    assert_has_sup_2s("asmad", Pum, &["mAm", "mA"]);
+    assert_has_sup_2d("yuzmad", Pum, &["yuvAm", "vAm"]);
+    assert_has_sup_2d("asmad", Pum, &["AvAm", "nO"]);
 }
 
 #[test]
 fn sutra_7_1_29() {
-    assert_has_sup_2p("asmad", Pum, &["asmAn"]);
-    assert_has_sup_2p("yuzmad", Pum, &["yuzmAn"]);
+    assert_has_sup_2p("asmad", Pum, &["asmAn", "naH"]);
+    assert_has_sup_2p("yuzmad", Pum, &["yuzmAn", "vaH"]);
 }
 
 #[test]
 fn sutra_7_1_30() {
-    assert_has_sup_4p("asmad", Pum, &["asmaByam"]);
-    assert_has_sup_4p("yuzmad", Pum, &["yuzmaByam"]);
+    assert_has_sup_4p("asmad", Pum, &["asmaByam", "naH"]);
+    assert_has_sup_4p("yuzmad", Pum, &["yuzmaByam", "vaH"]);
 }
 
 #[test]
@@ -343,8 +343,8 @@ fn sutra_7_1_32() {
 
 #[test]
 fn sutra_7_1_33() {
-    assert_has_sup_6p("asmad", Pum, &["asmAkam"]);
-    assert_has_sup_6p("yuzmad", Pum, &["yuzmAkam"]);
+    assert_has_sup_6p("asmad", Pum, &["asmAkam", "naH"]);
+    assert_has_sup_6p("yuzmad", Pum, &["yuzmAkam", "vaH"]);
 }
 
 #[test]
@@ -740,11 +740,13 @@ fn sutra_7_1_78() {
     assert_has_sup_1s(&dadat, Pum, &["dadat"]);
     assert_has_sup_1d(&dadat, Pum, &["dadatO"]);
     assert_has_sup_1p(&dadat, Pum, &["dadataH"]);
+    assert_has_sup_1s(&dadat, Stri, &["dadatI"]);
 
     let dadhat = create_krdanta("daDat", &[], &d("quDA\\Y", Juhotyadi), Krt::Satf);
     assert_has_sup_1s(&dadhat, Pum, &["daDat"]);
     assert_has_sup_1d(&dadhat, Pum, &["daDatO"]);
     assert_has_sup_1p(&dadhat, Pum, &["daDataH"]);
+    assert_has_sup_1s(&dadhat, Stri, &["daDatI"]);
 
     let jakshat = create_krdanta("jakzat", &[], &d("jakza~", Adadi), Krt::Satf);
     assert_has_sup_1s(&jakshat, Pum, &["jakzat"]);
@@ -755,6 +757,11 @@ fn sutra_7_1_78() {
     assert_has_sup_1s(&jagrat, Pum, &["jAgrat"]);
     assert_has_sup_1d(&jagrat, Pum, &["jAgratO"]);
     assert_has_sup_1p(&jagrat, Pum, &["jAgrataH"]);
+
+    let juhvat = create_krdanta("juhvat", &[], &d("hu\\", Juhotyadi), Krt::Satf);
+    assert_has_sup_1s(&juhvat, Pum, &["juhvat"]);
+    assert_has_sup_1d(&juhvat, Pum, &["juhvatO"]);
+    assert_has_sup_1p(&juhvat, Pum, &["juhvataH"]);
 }
 
 #[test]

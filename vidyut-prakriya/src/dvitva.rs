@@ -2,11 +2,13 @@
 ///
 /// TODO: the code here is repetitive and can be consolidated with a bit more thought.
 use crate::ac_sandhi;
+use crate::angasya::try_cani_rules;
 use crate::args::Agama as A;
 use crate::args::Lakara::*;
 use crate::args::Sanadi as S;
 use crate::args::Vikarana as V;
 use crate::core::operators as op;
+use crate::core::PrakriyaTag as PT;
 use crate::core::Rule::{Kashika, Varttika};
 use crate::core::Tag as T;
 use crate::core::Term;
@@ -125,12 +127,12 @@ fn try_dvitva(rule: Code, p: &mut Prakriya, i_dhatu: usize) -> Option<()> {
                 p_text.push_str(&t.text);
             }
         }
-        let dhatu = p.get(i_dhatu)?;
 
         let (start, end) = find_abhyasa_span(&p_text)?;
 
         // Term up to and including last vowel before abhyasa.
         let mut abhyasa = Term::make_abhyasa(&p_text[start..=end]);
+        // let mut abhyasa = Term::make_abhyasa(&p_text[0..=end]);
         abhyasa.add_tags(&[T::Abhyasa, T::FlagIttva]);
 
         // For OcicCat, etc.
@@ -143,13 +145,18 @@ fn try_dvitva(rule: Code, p: &mut Prakriya, i_dhatu: usize) -> Option<()> {
         if abhyasa.starts_with("tC") {
             abhyasa.set_adi("");
         }
+
+        let dhatu = p.get(i_dhatu)?;
         // For zatva in 8.3.55 specifically only the following dhatus seem to trigger
         // it.
         // Bhvadi    -> "uN" 01.1102 san
-        // Juhotyadi -> "f\" 03.0017 yaNluk
         // Divadi    -> "IN" 04.0038 san
         // Kryadi    -> "F"  09.0032 san
         if abhyasa.has_adi('s') && !dhatu.text.contains('s') {
+            // Todo: This is a HACK. These are coming from the san pratyaya
+            // duplication but it is unclear how to tag it.
+            // Nevertheless this needs Satva (षत्व).
+            // It is abhyasa but what else ? which could trigger 8.3.56-59 rules
             abhyasa.add_tag(T::FlagSaAdeshadi);
         }
 
@@ -304,7 +311,8 @@ fn run_at_index(p: &mut Prakriya, i: usize) -> Option<()> {
         !(t.is_agama() && t.has_tag(T::kit) && !t.is_it_agama())
     })?;
     let n = p.pratyaya(i_n)?;
-    if n.has_lakara(Lit) {
+    let is_let_lit_stem = n.has_lakara(Let) && p.has_tag(PT::FlagLetStemLit);
+    if n.has_lakara(Lit) || is_let_lit_stem {
         let dhatu = p.get(i)?;
         // kAshikA:
         //   dayateḥ iti dīṅo grahaṇaṃ na tu daya dāne ityasya.
@@ -327,6 +335,16 @@ fn run_at_index(p: &mut Prakriya, i: usize) -> Option<()> {
     }
 
     Some(())
+}
+
+fn apply_upadha_hrsva_for_can(p: &mut Prakriya) -> Option<bool> {
+    let i = p.find_first_where(|t: &Term| t.is_ni_pratyaya() && !t.is_empty())?;
+    if p.len() >= i + 2 && p.get(i + 1)?.is(V::caN) {
+        p.run_at("6.4.51", i, op::lup);
+        try_cani_rules(p);
+        return Some(true);
+    }
+    Some(false)
 }
 
 /// Runs dvitva rule only if the pratyaya that causes dvitva starts with a vowel.
@@ -375,6 +393,7 @@ pub fn try_dvirvacane_aci(p: &mut Prakriya) -> Option<()> {
             panic!("Infinite loop {:?}", p.terms());
         }
 
+        apply_upadha_hrsva_for_can(p);
         i = p.find_next_where(i, filter)?;
     }
 }

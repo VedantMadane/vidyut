@@ -131,13 +131,14 @@ fn try_run_for_pratipadika_at_index(p: &mut Prakriya, i: usize) -> Option<()> {
     }
 
     let prati = p.get(i)?;
-    let adi_ac = prati.text.find(al::is_ac)?;
-    if al::is_vrddhi(prati.get(adi_ac)?) {
-        p.add_tag_at("1.1.73", i, T::Vrddha);
-    } else if prati.is_any_phit(TYAD_ADI) {
-        p.add_tag_at("1.1.74", i, T::Vrddha);
+    if !prati.is_pratyaya() {
+        let adi_ac = prati.text.find(al::is_ac)?;
+        if al::is_vrddhi(prati.get(adi_ac)?) {
+            p.add_tag_at("1.1.73", i, T::Vrddha);
+        } else if prati.is_any_phit(TYAD_ADI) {
+            p.add_tag_at("1.1.74", i, T::Vrddha);
+        }
     }
-
     let prati = p.get(i)?;
     let jasi = p.has(i + 1, |t| t.is(Sup::jas));
 
@@ -174,8 +175,8 @@ fn try_run_for_pratipadika_at_index(p: &mut Prakriya, i: usize) -> Option<()> {
             p.add_tag_at("1.1.27", i, T::Sarvanama);
         }
     } else if i_u || ii_uu {
-        let i_sup = p.find_next_where(i, |t| t.is_sup())?;
-        let sup = p.get_if(i_sup, |t| !t.is_lupta())?;
+        let i_sup = p.find_next_where(i, |t| t.is_sup() && !t.is_lupta())?;
+        let sup = p.get(i_sup)?;
 
         // iyan-uvan are defined in 6.4.77 (Snu-dhAtu-bhruvAm) -- only dhAtu and bhrU apply here.
         let iyan_uvan_astri =
@@ -213,7 +214,16 @@ fn try_run_for_pratipadika_at_index(p: &mut Prakriya, i: usize) -> Option<()> {
                 }
             } else {
                 // Base case
-                p.add_tag_at("1.4.3", i_sup - 1, T::Nadi);
+                if p.has_tag(PT::Stri) {
+                    // Nitya Strilinga vachinah
+                    p.add_tag_at("1.4.3", i_sup - 1, T::Nadi);
+                } else if p.has_tag(PT::Bahuvrihi) {
+                    // Prathamalinga grahanam .. for eg. bahushreyasI
+                    p.run_at(Varttika("1.4.3.1"), i_sup - 1, add_tag(T::Nadi));
+                } else if prati.has_tag(T::Stri) {
+                    // Prathamalinga grahanam .. for eg. kumarI + kyac + kvip
+                    p.run_at(Varttika("1.4.3.1"), i, add_tag(T::Nadi));
+                }
             }
         }
     }
@@ -251,7 +261,19 @@ pub fn try_run_for_pada_or_bha(p: &mut Prakriya) -> Option<()> {
                 p.get_mut(i).unwrap().add_tag(T::Pada);
             }
         } else {
-            let next = match p.pratyaya(i + 1) {
+            // For `han`-ending dhatus followed by an empty krt pratyaya (e.g. kvip),
+            // skip past the empty pratyaya to find the actual sup for Bha/Pada
+            // assignment. This is needed so that bhasya rules like 6.4.134 (upadha-
+            // lopa for `an`-ending stems) can apply.
+            // (e.g. vftrahan: han + kvip(empty) + TA -> han needs Bha from TA)
+            let i_next =
+                if t.is_dhatu() && t.has_antya('n') && p.has(i + 1, |t| t.is_krt() && t.is_empty())
+                {
+                    i + 2
+                } else {
+                    i + 1
+                };
+            let next = match p.pratyaya(i_next) {
                 Some(v) => v,
                 None => continue,
             };
@@ -419,11 +441,19 @@ fn try_run_for_dhatu_pratyaya(p: &mut Prakriya, i: usize) -> Option<()> {
         } else if pratyaya.has_lakara(AshirLin) && !pratyaya.is_ardhadhatuka() {
             p.add_tag_at("3.4.116", i, T::Ardhadhatuka);
         } else if pratyaya.has_lakara(Let) {
-            let i_dhatu = p.find_last_where(|t| t.is_dhatu())?;
-            let dhatu = p.get(i_dhatu)?;
-            if dhatu.has_u("qukf\\Y") {
-                p.add_tag_at("3.4.117", i, T::Sarvadhatuka);
-            }
+            // 3.4.113 (tiṅ-śit sārvadhātukam) makes all tiṅ-pratyayas
+            // sārvadhātuka by default. In Vedic chandas, 3.4.117
+            // (chandasy ubhayathā) allows leṬ to be either sārvadhātuka or
+            // ārdhadhātuka. We mark all leṬ pratyayas as sārvadhātuka to
+            // get correct guṇa application for class 5/7/8/9 vikaraṇas.
+            p.add_tag_at("3.4.117", i, T::Sarvadhatuka);
+            // Per 3.4.94 (leṭo'ḍāṭau) interpretation, leṬ pratyayas are pit by
+            // default. We tag pit here (rather than in tin_pratyaya::siddhi
+            // where 3.4.94 fires) so atidesha rule 1.2.4 (sārvadhātukam apit)
+            // does not falsely fire and ngit-tag the pratyaya — which would
+            // cascade into 6.4.111 (śnasor allopaḥ) dropping the initial `a`
+            // of √as (producing `san` instead of `asan` for 3pl leṬ).
+            p.add_tag_at("3.4.94", i, T::pit);
         } else if pratyaya.has_tag_in(&[T::Tin, T::Sit]) {
             if !pratyaya.is_sarvadhatuka() {
                 p.add_tag_at("3.4.113", i, T::Sarvadhatuka);

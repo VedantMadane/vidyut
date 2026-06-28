@@ -21,8 +21,8 @@ use crate::args::Unadi as U;
 use crate::args::Vikarana as V;
 use crate::args::{Artha, Gana, TaddhitaArtha};
 use crate::core::operators as op;
-use crate::core::Rule::{Kaumudi, Varttika};
-use crate::core::{Morph, Prakriya, PrakriyaTag as PT, Rule, Tag as T, Term};
+use crate::core::Rule::{Anyatra, Kaumudi, Varttika};
+use crate::core::{Morph, Prakriya, PrakriyaTag as PT, Tag as T, Term};
 use crate::dhatu_gana as gana;
 use crate::it_samjna;
 use crate::sounds as al;
@@ -189,6 +189,7 @@ pub fn run_after_it_agama_karya_and_dvitva_karya(p: &mut Prakriya, i: usize) -> 
         && n.has_adi(AC)
         && !p.has(i + 1, |t| t.is(S::Ric))
         && !n.last().is(V::aN)
+        && !n.last().is_sup()
     {
         // jagmatuH, jaGnatuH, jajJe, ...
         p.run_at("6.4.98", i, op::upadha_lopa);
@@ -233,10 +234,27 @@ pub fn try_run_kniti_for_dhatu(p: &mut Prakriya, i: usize) -> Option<()> {
 ///
 /// (6.4.98 - 6.4.126)
 fn try_run_kniti(p: &mut Prakriya, i: usize) -> Option<()> {
-    let anga = p.get(i)?;
     let j = p.next_not_empty(i)?;
-    let n = p.pratyaya(j)?;
 
+    // 7.3.70 (ghor lopo leṭi vā): "for ghu dhātus (dā, dhā), [the antya] is
+    // optionally elided under leṬ." This gives both `dadhat` (weak, elided)
+    // and `dadhāti` (strong, retained) as alternates for non-Uttama; for
+    // Uttama corpus mostly retains the long ā (`dadhāni`, `dadhāma`) but
+    // the rule's optionality permits both.
+    {
+        let anga = p.get(i)?;
+        let n = p.pratyaya(j)?;
+        let fire_7_3_70 = anga.has_tag(T::Ghu)
+            && anga.has_antya('A')
+            && n.has_tag(T::Sarvadhatuka)
+            && n.last().has_lakara(Let);
+        if fire_7_3_70 {
+            p.optional_run_at("7.3.70", i, op::antya_lopa);
+        }
+    }
+
+    let anga = p.get(i)?;
+    let n = p.pratyaya(j)?;
     if !n.is_knit() {
         return None;
     }
@@ -460,14 +478,14 @@ pub fn run_before_guna(p: &mut Prakriya, i: usize) -> Option<()> {
         } else if anidit_hal
         && is_kniti
         // Block specific unadis
-        && !(n.last().is_any_unadi(&[U::katra, U::ka, U::kU]))
+        && !n.last().is_any_unadi(&[U::katra, U::ka, U::kU])
         {
             let mut blocked = false;
             // ancu gati-pUjanayoH
             if anga.has_u("ancu~") && !p.has(i + 1, |t| t.is(K::kvin)) {
                 blocked = p.optional_run("6.4.30", |_| {});
             }
-            if !blocked {
+            if !blocked && !p.has(i + 1, |t| t.is_ni_pratyaya()) {
                 p.run_at("6.4.24", i, op::upadha_lopa);
             }
         } else if anga.has_text("ranj") {
@@ -685,7 +703,7 @@ pub fn run_before_guna(p: &mut Prakriya, i: usize) -> Option<()> {
                 return None;
             }
         } else if last.is_san() || last.is_any_krt(&[K::Rvul, K::lyuw]) {
-            p.run(Rule::Kaumudi("2483.3"), |_| {});
+            p.run(Kaumudi("2483.3"), |_| {});
             return None;
         }
 
@@ -845,7 +863,7 @@ pub fn run_for_ni_at_index(p: &mut Prakriya, i_ni: usize) -> Option<()> {
             // krATayati, by nipAtana from 2.3.53.
             //
             // But, we have akraTi/akrATi for ciR-Ramul.
-            p.step(Rule::Kaumudi("2353"));
+            p.step(Kaumudi("2353"));
         } else if let Some(_last) = dhatu.last_vowel() {
             // Gawayati, ...
             p.run_at("6.4.92", i_dhatu, |t| {
@@ -886,8 +904,11 @@ pub fn run_for_ni_at_index(p: &mut Prakriya, i_ni: usize) -> Option<()> {
             // being done (e.g. cayyAt)
             //
             // Exclude terms past `i_ni` to avoid problems for sup sandhi.
-            ac_sandhi::apply_general_ac_sandhi(p, 0, i_ni);
-            p.run_at("6.4.51", i_ni, op::lopa);
+            let start = p.find_first_where(|t| !t.is_empty() && !t.is_upasarga())?;
+            ac_sandhi::apply_general_ac_sandhi(p, start, i_ni);
+            if !p.get(i_ni)?.has_tag(T::Lup) {
+                p.run_at("6.4.51", i_ni, op::lup);
+            }
         }
     }
 
@@ -1005,10 +1026,13 @@ fn try_bhasya_for_index(p: &mut Prakriya, i: usize) -> Option<()> {
         p.run_at("6.4.130", i, op::text("pad"));
     } else if bha.is(K::kvasu) || bha.has_u_in(&["kvasu~", "vasu~"]) {
         p.run("6.4.131", |p| {
-            p.set(i, op::text("us"));
             // valAdi is lost, so iw-Agama is also lost.
             if i > 0 && p.has(i - 1, |t| t.is(A::iw)) {
                 p.terms_mut().remove(i - 1);
+                p.step(Anyatra("pariBAzenduSeKaraH,akftavyUhAH pARinIyAH (iqAgama-parAvartanam),https://ashtadhyayi.com/paribhashendushekhar/56"));
+                p.set(i-1, op::text("us"));
+            } else {
+                p.set(i, op::text("us"));
             }
         });
     } else if i > 0 && p.has(i - 1, |t| t.has_text("vAh")) && p.has(i, |t| t.is(K::Rvi)) {
@@ -1090,7 +1114,9 @@ fn try_bhasya_for_index(p: &mut Prakriya, i: usize) -> Option<()> {
         }
 
         let bha = p.get(i)?;
-        let next = p.get(i + 1)?;
+        // Skip empty krt pratyayas (e.g. kvip) to find the actual sup.
+        let i_next = p.next_not_empty(i).unwrap_or(i + 1);
+        let next = p.get(i_next)?;
         if bha.ends_with("an") && !block_lopa {
             let n = bha.len();
             if n >= 4

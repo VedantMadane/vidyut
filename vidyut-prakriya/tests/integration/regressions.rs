@@ -5,12 +5,12 @@
 extern crate test_utils;
 use test_utils::*;
 use vidyut_prakriya::args::Gana::*;
-use vidyut_prakriya::args::Krdanta;
 use vidyut_prakriya::args::Lakara::*;
 use vidyut_prakriya::args::Linga::*;
 use vidyut_prakriya::args::{
     BaseKrt as Krt, Dhatu, Lakara, Prayoga, Purusha, Sanadi, Taddhita, Tinanta, Vacana,
 };
+use vidyut_prakriya::args::{Krdanta, Unadi};
 use vidyut_prakriya::{Rule, Vyakarana};
 
 #[test]
@@ -423,13 +423,13 @@ fn bru_with_upsarga_lit() {
     // (pr + o) + uc + ire (Adgunah)             pra + (U + c + ire)    (savarRe dirGaH)
     // pr  + av + uc + ire  (ecoyavAyAvaH)       (pr  + o) + c + ire    (Adgunah)
     // pravuchire ❌                             procire ✅
-    assert_has_tinantas(
+    assert_has_tinantas!(
         &["pra", "ava"],
         &d("brUY", Adadi),
         Lit,
         Purusha::Prathama,
         Vacana::Bahu,
-        &["prAvocire", "prAvocuH"],
+        &["prAvocire", "prAvocuH"]
     );
 }
 
@@ -491,4 +491,147 @@ fn eka_dvi_as_sarvanama() {
     assert_has_sup_1d("dvi", Napumsaka, &["dve"]);
     assert_has_sup_2p("tri", Napumsaka, &["trIRi"]);
     assert_has_sup_1p("tri", Napumsaka, &["trIRi"]);
+}
+
+#[test]
+fn kvip_bru() {
+    let br_u = create_krdanta("vAc", &[], &d("brUY", Adadi), Krt::kvip);
+    assert_has_sup_1s(&br_u, Stri, &["vAk"]);
+}
+
+#[test]
+fn kvip_stha() {
+    let br_u = create_krdanta("sTA", &[], &d("zWA\\", Bhvadi), Krt::kvip);
+    assert_has_sup_1s(&br_u, Stri, &["sTAH"]);
+}
+#[test]
+fn vadha_adesha_ashirlin_only_2_4_42() {
+    let han = d("ha\\na~", Adadi);
+    assert_has_ta_k(&["vi"], &han, VidhiLin, &["vihanyeta"]); // No replacement
+    assert_has_ta_k(&["vi"], &han, AshirLin, &["vivaDizIzwa"]); // vadha-adesha
+}
+#[test]
+fn gam_pra_sam_in_sani() {
+    let sani_pra_gam = create_krdanta("prajigamizu", &["pra"], &san(&d("ga\\mx~", Bhvadi)), Krt::u);
+    let sani_sam_gam = krdanta(&["sam"], &san(&d("ga\\mx~", Bhvadi)), Krt::u);
+    assert_has_sup_1s(&sani_pra_gam, Pum, &["prajigamizuH"]);
+    assert_has_sup_1s(&sani_sam_gam, Pum, &["saYjigaMsuH", "saYjigamizuH"]);
+}
+#[test]
+fn gupa_yanluk_satf_sanac() {
+    let gupa_satf = krdanta(&[], &yan_luk(&d("gupa~\\", Bhvadi)), Krt::Satf);
+    assert_has_sup_1s(&gupa_satf, Pum, &["jugupsan"]);
+    let gupa_sanach = krdanta(&[], &yan_luk(&d("gupa~\\", Bhvadi)), Krt::SAnac);
+    assert_has_sup_1s(&gupa_sanach, Pum, &[]);
+}
+// AN + han + kvip
+//
+// 6.4.15 would normally lengthen the upadha of an anunasika-final dhatu.
+// But per varttika (modeled as 6.4.15.1 in the implementation), `han` is
+// exempt here, so we expect Ahan (not AhAn).
+#[test]
+fn aa_han_kvip_dirgha() {
+    let han = d("ha\\na~", Adadi);
+    assert_has_krdanta(&["AN"], &han, Krt::kvip, &["Ahan"]);
+}
+
+#[test]
+fn han_kvip_test() {
+    let vftrahan = upapada_krdanta("vftra", &[], &d("ha\\na~", Adadi), Krt::kvip);
+    // prathamA
+    assert_has_sup_1s(&vftrahan, Pum, &["vftrahA"]);
+    assert_has_sup_1d(&vftrahan, Pum, &["vftrahaRO"]);
+    assert_has_sup_1p(&vftrahan, Pum, &["vftrahaRaH"]);
+    // dvitIyA
+    assert_has_sup_2s(&vftrahan, Pum, &["vftrahaRam"]);
+    assert_has_sup_2d(&vftrahan, Pum, &["vftrahaRO"]);
+    assert_has_sup_2p(&vftrahan, Pum, &["vftraGnaH"]);
+    // tftIyA
+    assert_has_sup_3s(&vftrahan, Pum, &["vftraGnA"]);
+    assert_has_sup_3d(&vftrahan, Pum, &["vftrahaByAm"]);
+    assert_has_sup_3p(&vftrahan, Pum, &["vftrahaBiH"]);
+    // caturTI
+    assert_has_sup_4s(&vftrahan, Pum, &["vftraGne"]);
+    assert_has_sup_4d(&vftrahan, Pum, &["vftrahaByAm"]);
+    assert_has_sup_4p(&vftrahan, Pum, &["vftrahaByaH"]);
+    // paYcamI
+    assert_has_sup_5s(&vftrahan, Pum, &["vftraGnaH"]);
+    assert_has_sup_5d(&vftrahan, Pum, &["vftrahaByAm"]);
+    assert_has_sup_5p(&vftrahan, Pum, &["vftrahaByaH"]);
+    // zazWI
+    assert_has_sup_6s(&vftrahan, Pum, &["vftraGnaH"]);
+    assert_has_sup_6d(&vftrahan, Pum, &["vftraGnoH"]);
+    assert_has_sup_6p(&vftrahan, Pum, &["vftraGnAm"]);
+    // saptamI
+    assert_has_sup_7s(&vftrahan, Pum, &["vftraGni", "vftrahaRi"]);
+    assert_has_sup_7d(&vftrahan, Pum, &["vftraGnoH"]);
+    assert_has_sup_7p(&vftrahan, Pum, &["vftrahasu"]);
+    // samboDana
+    assert_has_sup_ss(&vftrahan, Pum, &["vftrahan"]);
+    assert_has_sup_sd(&vftrahan, Pum, &["vftrahaRO"]);
+    assert_has_sup_sp(&vftrahan, Pum, &["vftrahaRaH"]);
+}
+
+#[test]
+fn kvip_han_stem() {
+    let han = create_krdanta("han", &[], &d("ha\\na~", Adadi), Krt::kvip);
+    assert_has_sup_ss(&han, Pum, &["han"]);
+}
+
+#[test]
+fn satf_yanluk_mat_voc() {
+    let ma = d("mA\\", Adadi).with_sanadi(&[Sanadi::yaNluk]);
+    let mamat = krdanta(&[], &ma, Krt::Satf);
+    assert_has_sup_ss(&mamat, Pum, &["mAmat"]);
+}
+
+#[test]
+fn satf_yanluk_hat_voc() {
+    let mah = d("ma\\ha~", Bhvadi).with_sanadi(&[Sanadi::yaNluk]);
+    let mamahat = krdanta(&[], &mah, Krt::Satf);
+    assert_has_sup_ss(&mamahat, Pum, &["mAmahat"]);
+}
+
+#[test]
+fn likhitva() {
+    assert_has_krdanta(
+        &[],
+        &d("liKa~\\", Tudadi),
+        Krt::ktvA,
+        &["leKitvA", "liKitvA"],
+    );
+}
+
+#[test]
+#[allow(non_snake_case)]
+fn test_can_skip_at_agama_for_eDa() {
+    assert_has_tinantas!(
+        &[],
+        &nic(&d("eDa~\\", Bhvadi)),
+        Lun,
+        Purusha::Prathama,
+        Vacana::Eka,
+        true, // skip_at_agama = true for mAN
+        &["idiDat", "idiData"]
+    );
+}
+
+#[test]
+#[allow(non_snake_case)]
+fn test_asa_nic_lun() {
+    let i = d("asa~^", Bhvadi);
+    assert_has_tinantas!(
+        &[],
+        &nic(&i),
+        Lun,
+        Purusha::Prathama,
+        Vacana::Eka,
+        &["Asisat", "Asisata"]
+    );
+}
+
+#[test]
+fn dhan_usi() {
+    let dhanus = krdanta(&[], &d("Dana~", Juhotyadi), Unadi::usi);
+    assert_has_sup_1p(&dhanus, Napumsaka, &["DanUMzi"]);
 }

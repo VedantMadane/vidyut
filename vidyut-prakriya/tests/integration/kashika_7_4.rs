@@ -530,7 +530,7 @@ fn sutra_7_4_49() {
 #[test]
 fn sutra_7_4_50() {
     let kf = d("qukf\\Y", Tanadi);
-    assert_has_tinantas(&[], &kf, Lut, Madhyama, Eka, &["kartAsi", "kartAse"]);
+    assert_has_tinantas!(&[], &kf, Lut, Madhyama, Eka, &["kartAsi", "kartAse"]);
     assert_has_sip(&[], &d("asa~", Adadi), Lat, &["asi"]);
     // TODO: vyatise
 }
@@ -538,12 +538,12 @@ fn sutra_7_4_50() {
 #[test]
 fn sutra_7_4_51() {
     let kf = d("qukf\\Y", Tanadi);
-    assert_has_tinantas(&[], &kf, Lut, Prathama, Dvi, &["kartArO"]);
-    assert_has_tinantas(&[], &kf, Lut, Prathama, Bahu, &["kartAraH"]);
+    assert_has_tinantas!(&[], &kf, Lut, Prathama, Dvi, &["kartArO"]);
+    assert_has_tinantas!(&[], &kf, Lut, Prathama, Bahu, &["kartAraH"]);
 
     let i = d("i\\N", Adadi);
-    assert_has_tinantas(&["aDi"], &i, Lut, Prathama, Dvi, &["aDyetArO"]);
-    assert_has_tinantas(&["aDi"], &i, Lut, Prathama, Bahu, &["aDyetAraH"]);
+    assert_has_tinantas!(&["aDi"], &i, Lut, Prathama, Dvi, &["aDyetArO"]);
+    assert_has_tinantas!(&["aDi"], &i, Lut, Prathama, Bahu, &["aDyetAraH"]);
 }
 
 #[test]
@@ -694,7 +694,22 @@ fn sutra_7_4_66() {
     assert_has_lit(&[], &d("vftu~\\", Bhvadi), &["vavfte"]);
     assert_has_lit(&[], &d("vfDu~\\", Bhvadi), &["vavfDe"]);
     assert_has_lit(&[], &d("SfDu~\\", Bhvadi), &["SaSfDe"]);
-    // TODO: yaNluk examples.
+
+    assert_has_lat(
+        &[],
+        &yan_luk(&d("nftI~", Divadi)),
+        &[
+            "narInarti",
+            "narInartti",
+            "narInftIti",
+            "narinarti",
+            "narinartti",
+            "narinftIti",
+            "narnarti",
+            "narnartti",
+            "narnftIti",
+        ],
+    );
 }
 
 #[test]
